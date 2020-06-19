@@ -6,6 +6,11 @@
 
 ![alt text](serial.png)
 
+**HARDWARE:**
+- Arduino Uno
+- LCD Button shield
+- RS232 serial shield (see connection)
+
 **LCD:**
 - 2x16 character lcd display.
 - Data on LCD line 1. Menu on LCD line 2.
@@ -19,7 +24,7 @@
 - Menu 6 = Display non chars on/off
 - Menu 7 = RX bytes counter (bytes received)
 
-**IN CONNECTION:**
+**CONNECTION:**
 - RX PIN 0, TX PIN 1.
 
 **HOMEPAGE:**
