@@ -4,6 +4,8 @@
 
 >Used to diagnose industrial equipment on RS232 serial protocoll.
 
+![alt text](serial.png)
+
 **LCD:**
 - 2x16 character lcd display.
 - Data on LCD line 1. Menu on LCD line 2.
