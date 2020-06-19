@@ -2,7 +2,7 @@
 
 >By Per Emil Skjold.
 
->Used to diagnose industrial equipment on RS232 serial protocoll.**
+>Used to diagnose industrial equipment on RS232 serial protocoll.
 
 **LCD:**
 - 2x16 character lcd display.
