@@ -13,6 +13,7 @@
    HOMEPAGE:
     https://skjolddisplay.com/projects/handheld-rs232-serial-data-tester/
     https://www.youtube.com/watch?time_continue=13&v=vVRO6BWD5QU&feature=emb_title
+    https://github.com/skjolddesign/Handheld-RS232-serial-data-tester
    HISTORY:
     v15 Added menu item, display non chars. Bytes received below Dec32 is displayed on lcd.
         Added menu item, RX bytes counter.
