@@ -17,70 +17,68 @@
    HISTORY:
     v15 Added menu item, display non chars. Bytes received below Dec32 is displayed on lcd.
         Added menu item, RX bytes counter.
+    v16 Key press retrig avoided 
 
 
 */
 
 //EEPROM STRING
 #include <EEPROM.h>
-// the current address in the EEPROM (i.e. which byte
-// we're going to write to next)
-int addr = 0;
-boolean rec = false; //minne for styring opptak til eeprom
+int addr = 0;// the current address in the EEPROM (i.e. which byte we're going to write to next)
+boolean rec = false; //rec on/off controll
 
 //LCD
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // pins for lcd display
-const int light = 10;
+const int lcdBacklightPin = 10;
 unsigned long lastLight = 0; //lcd led
-boolean displayNonChars = false;
+
 
 //KEYS
 long baud[] = {300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 256000};
-int baudIndex = 4;
+int baudIndex = 4; // default index 4(9600)
 int adc_key_val[5] = {50, 200, 400, 600, 800 }; //ANALOG VALUES FROM BUTTON SHIELD
 int NUM_KEYS = 5;
 int adc_key_in;
 int key = -1;
 int oldkey = -1;
-boolean left = false; //MINNE FOR AV PÅ LEFT KNAPP AUTOSEND
 unsigned long lastHold = millis();
 boolean holding = true; //sperr
 
 //AUTOSEND
 long previousMillis = 0;        // store last time x was updated
-unsigned int testRunde = 0;
-boolean autoSendStatus = false;
+unsigned int testCounter = 0;
+boolean sendCounterState = false;
 
 //MENU
-const byte menuItems = 6; //number of total items in menu
-int menuSelected = 0;
+const byte menuTotalItems = 7; //number of total items in menu
+int menuSelectedItem = 1;
 unsigned int rxByteCounter = 0;
+boolean displayNonChars = false;
 
-
-void menyOpp() {
-  menuSelected++;
-  if (menuSelected > menuItems) menuSelected = 0; //reset
+void menuUp() {
+  menuSelectedItem++;
+  if (menuSelectedItem > menuTotalItems) menuSelectedItem = 1; //reset
   updateMenuSelection();
 }
 
-void menyNed() {
-  menuSelected--;
-  if (menuSelected < 0) menuSelected = menuItems; //reset
+void menuDown() {
+  menuSelectedItem--;
+  if (menuSelectedItem < 1) menuSelectedItem = menuTotalItems; //reset
   updateMenuSelection();
 }
 
 void msgSendt() {
   GOTOlcdLine2();
   lcd.print("Sendt           ");
-  delay(500);
+  delay(100);
 }
 
-//OK BUTTON,CHANGE MENU ITEM
-void caseChangeItem() {
-  switch (menuSelected) {
+//RIGHT BUTTON,CHANGE MENU ITEM
+void menuItemRightClick() {
+  switch (menuSelectedItem) {
 
-    case 0://CHANGE BAUD
+    case 1://CHANGE BAUD
       baudIndex++; //tell opp
       if (baudIndex > 11) baudIndex = 0;   //reset baudIndex
       Serial.end() ; //UNNGÅ HENG
@@ -89,18 +87,18 @@ void caseChangeItem() {
       Serial.begin(baud[baudIndex]);
       break;
 
-    case 1: // FLIP COUNTER STATE
-      autoSendStatus = !autoSendStatus;
+    case 2: // FLIP COUNTER STATE
+      sendCounterState = !sendCounterState;
       break;
 
 
-    case 2: // SEND 
+    case 3: // SEND PRESET
       intermec();
       msgSendt();
       break;
 
 
-    case 3: //FLIP REC STATE
+    case 4: //FLIP REC STATE
       if (rec == true) { //DO
         //STOPP
         rec = false;
@@ -116,13 +114,17 @@ void caseChangeItem() {
       }
       break;
 
-    case 4: //START PLAYBACK
+    case 5: //START PLAYBACK
       //Serial.println(F("Sending recorded:"));
       playback();
       break;
     
-    case 5: //FLIP displayNonChars STATE
+    case 6: //FLIP displayNonChars STATE
       displayNonChars=!displayNonChars;
+      break;
+
+    case 7: //CLEAR RX COUNTER
+      rxByteCounter=0;
       break;
       
   }
@@ -132,10 +134,10 @@ void caseChangeItem() {
 //UP DOWN MENU ITEM CYCLE 
 void updateMenuSelection() {
   GOTOlcdLine2();
-  switch (menuSelected) {
+  switch (menuSelectedItem) {
 
 
-    case 0: //BAUD
+    case 1: //BAUD
       lcd.print("Baud = ");
       lcd.print(baud[baudIndex]);
       lcd.print("      ");
@@ -144,9 +146,9 @@ void updateMenuSelection() {
       break;
 
 
-    case 1: //COUNTER
+    case 2: //COUNTER
       lcd.print("Send count = ");
-      if (autoSendStatus == true) {
+      if (sendCounterState == true) {
         lcd.print("On ");
         
       }
@@ -155,29 +157,29 @@ void updateMenuSelection() {
       }
       break;
 
-    case 2: //PRESET
+    case 3: //PRESET
       lcd.print("Send Preset      ");
       break;
 
 
-    case 3: //RECORD
+    case 4: //RECORD
       lcd.print("Record = ");
       if (rec == true) lcd.print("On    ");
       else lcd.print("Off   ");
       break;
 
 
-    case 4: //playbackK
+    case 5: //playbackK
       lcd.print("Playback        ");
       break;
 
-    case 5: //displayNonChars
+    case 6: //displayNonChars
       lcd.print("Non char = ");
       if (displayNonChars == true) lcd.print("On   ");
       else lcd.print("Off  ");
       break;
     
-    case 6: //display rx bytes
+    case 7: //display rx bytes
       lcd.print("RX bytes: ");
       lcd.print(rxByteCounter);
       lcd.print("     ");
@@ -192,6 +194,7 @@ void updateMenuSelection() {
 
 
 void setup() {
+  pinMode(lcdBacklightPin,OUTPUT);
   Serial.begin(baud[baudIndex]);
   Serial.println(F("RS232 Serial data tester by Per Emil Skjold."));
   Serial.println(F("Use arrow up, down, right to scroll menu."));
@@ -200,7 +203,7 @@ void setup() {
   lcd.clear();
   lcd.print("Serial Tester");
   lcd.setCursor(0, 1);
-  lcd.print("v15 by PES");
+  lcd.print("v16 by PES");
   delay(3000);
   lcd.clear();
   lcd.print("Menu arrow up,");
@@ -215,7 +218,7 @@ void setup() {
 
 // count bytes, and update menu now if in the menu
 void updateMenu6RxBytes(){
-      if(menuSelected==6){
+      if(menuSelectedItem==7){
       lcd.setCursor(0, 1);
       lcd.print("RX bytes: ");
       lcd.print(rxByteCounter);
@@ -228,8 +231,7 @@ void loop(){
   // SERIAL READ
   if (Serial.available()) { //SERIAL PORT STARTET
     boolean freshdata = true;
-    // wait a bit for the entire message to arrive
-    //delay(100);
+    //delay(100);// wait a bit for the entire message to arrive
     //LowPower.powerDown(SLEEP_120MS, ADC_OFF, BOD_OFF);
     lastLight = millis(); //SKRU PÅ LYS
     // read all the available characters
@@ -269,12 +271,12 @@ void loop(){
           lcd.print("EEPROM full      ");
         }
       }
-      //**************************************************
-    }//WHILE SERIAL SERIAL END
-    //lcd.print("                ");//FILL
+    }// serial end
+    
+    //SERIAL END, SAVE END TO EEPROM
+    //**************************************************
     updateMenu6RxBytes(); //THIS WILL UPDATE COUNTER WHEN RX MESSAGE IS DONE
     GOTOlcdLine1();
-
     //ADD LINE END 13 Og 10 BYTE TO EEPROM AT SERIAL END.
     if (rec == true) {
       if (addr <= 1023) {
@@ -295,12 +297,9 @@ void loop(){
 
   }//IF SERIAL SLUTT
 
-
-
   //*************************************************************
   readAnalog();
-  delay (20);  //debounce timer.
-
+  delay (20);  //20ms debounce timer. Need this to sort messages on screen.
 
   sendCount();
   backlight();
@@ -314,10 +313,10 @@ void sendCount() {
     previousMillis = currentMillis;
     //DO
     //AUTO TEST STRENG UT
-    if (autoSendStatus == true) {
+    if (sendCounterState == true) {
       Serial.print(F("Count Test nr."));
-      Serial.println(testRunde);
-      testRunde++;
+      Serial.println(testCounter);
+      testCounter++;
     }
 
   }
@@ -325,54 +324,41 @@ void sendCount() {
 
 
 //READ BUTTONS
-//***************************************************************************
 void readAnalog() {
   adc_key_in = analogRead(0);    // read the value from the sensor
   key = get_key(adc_key_in);  // convert into key press. KEY ER -1 NÅR INGEN ER NEDE
 
-  //  if (key != oldkey)   // new keypress is detected
-  if (key >= 0)   // keypress is detected
-  {
+ if (key != oldkey) {  // new keypress is detected
+  oldkey=key;
+  if (key >= 0)  {   // keypress is detected
     // ONE SHOT EVENTS ON KLICK DOWN
     lastLight = millis(); //SKRU PÅ LYS
     backlight();
     doKeyDown();
-    delay(400);  // wait for debounce time
-
-    adc_key_in = analogRead(0);    // read the value from the sensor
-    key = get_key(adc_key_in);    // convert into key press
-
-    if (key != oldkey)   //NY KNAPP
-    {
-      oldkey = key;
-      if (key >= 0) {
-        //  lcd.setCursor(0, 1);
-        //  lcd.print(msgs[key]);  //BUTTON TEXT
-      }
-    }
+    delay(100);  // 200ms button debounce time
   }
+}  
 
-  // BUTTON HOLD, NOT IN USE..
-  else {
-    //RESET HOLD VED KNAPP AV
-    unsigned long currentMillis = millis();
-    lastHold = currentMillis; //sett startpunktet for holde tid
-    holding = false; //klargjør
-  }
+//  // BUTTON HOLD, NOT IN USE..
+//  else {
+//    //RESET HOLD VED KNAPP AV
+//    unsigned long currentMillis = millis();
+//    lastHold = currentMillis; //sett startpunktet for holde tid
+//    holding = false; //klargjør
+//  }
 }
 
 
-//***************************************************************************
 void doKeyDown() {
 
   //UP KEY (1)
   if (key == 1) { //skift funksjon sørger for at println går kun en loop.
-    menyNed();
+    menuDown();
   }
 
   //DOWN KEY (2)
   if (key == 2) { //skift funksjon sørger for at println går kun en loop.
-    menyOpp();
+    menuUp();
   }
 
   //LEFT
@@ -382,7 +368,7 @@ void doKeyDown() {
 
   //RIGHT
   if (key == 0) {
-    caseChangeItem();
+    menuItemRightClick();
   }
 
 }
@@ -442,7 +428,7 @@ int get_key(unsigned int input) {
   return k;
 }
 
-
+// not sure what this is 10years later..
 void backlight() {
   // // set the pin to input mode to turn the backlight on and to output and low to turn the LED off.
   // // http://arduino.cc/forum/index.php?topic=96747.0
@@ -450,12 +436,12 @@ void backlight() {
   unsigned long currentMillis = millis();
   if ((currentMillis - lastLight) >= 60000 ) { //AV ETTER 60sek.
     //OFF
-    pinMode(light, OUTPUT);
-    digitalWrite(light, LOW);
+    pinMode(lcdBacklightPin, OUTPUT);
+    digitalWrite(lcdBacklightPin, LOW);
   }
   else {
     //ON
-    pinMode(light, INPUT);
+    pinMode(lcdBacklightPin, INPUT);
   }
 }
 
@@ -485,9 +471,8 @@ void playback() {
   //lcd.write("                 ");
   //GOTOlcdLine1();
   lcd.print("Sendt       ");
-  delay(500);
+  //delay(100);
 
 
 
 }
-
