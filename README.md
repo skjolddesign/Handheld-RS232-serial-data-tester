@@ -16,7 +16,7 @@
 
 **LCD:**
 - 2x16 character lcd display.
-- Data on LCD line 1. Menu on LCD line 2.
+- Serial Data prints on line 1. Menu prints on line 2.
 
 **MENUS:**
 - Menu 1 = Baud rate
@@ -35,5 +35,6 @@
 - https://www.youtube.com/watch?time_continue=13&v=vVRO6BWD5QU
 
 **HISTORY:**
-- v15 Added menu item, display non chars. Bytes received below Dec32 is displayed on lcd.
-- Added menu item, RX bytes: counter
+- v15 Added menu: 'Display non chars'. (Non chars is bytes below Dec32).
+  Added menu: 'RX bytes: 0'.
+- v16 Key press retrig avoided.
