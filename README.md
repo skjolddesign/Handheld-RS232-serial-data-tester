@@ -38,3 +38,4 @@
 - v15 Added menu: 'Display non chars'. (Non chars is bytes below Dec32).
   Added menu: 'RX bytes: 0'.
 - v16 Key press retrig avoided.
+- v17 Added menu: Echo On/Off (returns data to sender).   
