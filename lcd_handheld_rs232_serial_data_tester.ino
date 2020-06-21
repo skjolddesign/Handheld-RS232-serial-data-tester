@@ -1,23 +1,37 @@
 /* RS232 LCD SERIAL TESTER BY PER EMIL SKJOLD.
-   LCD:
-    2x16 character lcd display.
-    Data on LCD line 1. Menu on LCD line 2.
-   MENU:
-    Menu 1 = Baud rate
-    Menu 2 = Send counter
-    Menu 3 = Send Preset string
-    Menu 4 = Record on/off
-    Menu 5 = playback
-   PIN CONNECTION:
-    RX PIN 0, TX PIN 1.
-   HOMEPAGE:
-    https://skjolddisplay.com/projects/handheld-rs232-serial-data-tester/
-    https://www.youtube.com/watch?time_continue=13&v=vVRO6BWD5QU&feature=emb_title
-    https://github.com/skjolddesign/Handheld-RS232-serial-data-tester
-   HISTORY:
-    v15 Added menu item, display non chars. Bytes received below Dec32 is displayed on lcd.
-        Added menu item, RX bytes counter.
-    v16 Key press retrig avoided 
+**HARDWARE:**
+- Arduino Uno
+- LCD Button shield
+- RS232 serial shield (see connection)
+
+**LIBRARY:**
+- LiquidCrystal https://github.com/arduino-libraries/LiquidCrystal
+
+**LCD:**
+- 2x16 character lcd display.
+- Serial Data prints on line 1. Menu prints on line 2.
+
+**MENUS:**
+- Menu 1 = Baud rate
+- Menu 2 = Send counter on/off
+- Menu 3 = Send Preset string
+- Menu 4 = Record on/off
+- Menu 5 = playback
+- Menu 6 = Display non chars on/off
+- Menu 7 = RX bytes counter (bytes received)
+
+**CONNECTION:**
+- RX PIN 0, TX PIN 1.
+
+**HOMEPAGE:**
+- https://skjolddisplay.com/projects/handheld-rs232-serial-data-tester/
+- https://www.youtube.com/watch?time_continue=13&v=vVRO6BWD5QU
+
+HISTORY:
+- v15 Added menu: 'Non chars = On/Off' (Non chars is bytes below Dec32).
+  Added menu: 'RX bytes: 0'.
+- v16 Key press retrig avoided.
+- v17 Added menu: Echo On/Off (returns data to sender).    
 
 
 */
@@ -36,12 +50,12 @@ unsigned long lastLight = 0; //lcd led
 
 //KEYS
 long baud[] = {300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 256000};
-int baudIndex = 4; // default index 4(9600)
+byte baudIndex = 4; // default index 4(9600)
 int adc_key_val[5] = {50, 200, 400, 600, 800 }; //ANALOG VALUES FROM BUTTON SHIELD
-int NUM_KEYS = 5;
+byte NUM_KEYS = 5;
 int adc_key_in;
-int key = -1;
-int oldkey = -1;
+byte key = -1;
+byte oldkey = -1;
 unsigned long lastHold = millis();
 boolean holding = true; //sperr
 
@@ -51,10 +65,11 @@ unsigned int testCounter = 0;
 boolean sendCounterState = false;
 
 //MENU
-const byte menuTotalItems = 7; //number of total items in menu
-int menuSelectedItem = 1;
+const byte menuTotalItems = 8; //number of total items in menu
+byte menuSelectedItem = 1;
 unsigned int rxByteCounter = 0;
 boolean displayNonChars = false;
+boolean echoState = false;
 
 void menuUp() {
   menuSelectedItem++;
@@ -81,6 +96,7 @@ void menuItemRightClick() {
     case 1://CHANGE BAUD
       baudIndex++; //tell opp
       if (baudIndex > 11) baudIndex = 0;   //reset baudIndex
+      //baudIndex % 11;
       Serial.end() ; //UNNGÅ HENG
       delay(150);
       GOTOlcdLine2();
@@ -125,6 +141,10 @@ void menuItemRightClick() {
 
     case 7: //CLEAR RX COUNTER
       rxByteCounter=0;
+      break;
+      
+    case 8: //FLIP echoState
+      echoState=!echoState;
       break;
       
   }
@@ -184,6 +204,12 @@ void updateMenuSelection() {
       lcd.print(rxByteCounter);
       lcd.print("     ");
       break;
+
+    case 8: //echo (return all bytes)
+      lcd.print("Echo = ");
+      if (echoState == true) lcd.print("On   ");
+      else lcd.print("Off  ");
+      break;
       
   }
   
@@ -201,17 +227,25 @@ void setup() {
 
   lcd.begin(16, 2);
   lcd.clear();
-  lcd.print("Serial Tester");
+  lcd.print("Handheld serial");
   lcd.setCursor(0, 1);
-  lcd.print("v16 by PES");
+  lcd.print("data tester");
   delay(3000);
   lcd.clear();
-  lcd.print("Menu arrow up,");
+  lcd.print("by Per Emil S");
+  delay(2000);
+  lcd.clear();
+  lcd.print("rx pin = 0");
+  lcd.setCursor(0, 1);
+  lcd.print("tx pin = 1");
+  delay(2000);
+  lcd.clear();
+  lcd.print("Menu = arrow up,");
   lcd.setCursor(0, 1);
   lcd.print("down, right.");
-  delay(3000);
+  delay(2000);
   lcd.clear();
-  lcd.print("Ready");
+  lcd.print("v17 Ready");
 
   updateMenuSelection();
 }
@@ -250,6 +284,9 @@ void loop(){
       // display data, with non chars if selected
       if (displayNonChars) lcd.write(inchar);
       else if (inchar >= 31) lcd.write(inchar); //write only ascii chars to lcd
+      
+      //echo data back to sender
+      if (echoState) Serial.write(inchar);
       
 
 
@@ -472,7 +509,5 @@ void playback() {
   //GOTOlcdLine1();
   lcd.print("Sendt       ");
   //delay(100);
-
-
 
 }
