@@ -11,6 +11,9 @@
 - LCD Button shield
 - RS232 serial shield (see connection)
 
+**LIBRARY:**
+- LiquidCrystal https://github.com/arduino-libraries/LiquidCrystal
+
 **LCD:**
 - 2x16 character lcd display.
 - Data on LCD line 1. Menu on LCD line 2.
