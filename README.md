@@ -26,6 +26,7 @@
 - Menu 5 = playback
 - Menu 6 = Display non chars on/off
 - Menu 7 = RX bytes counter (bytes received)
+- Menu 8 = Echo data back to sender.
 
 **CONNECTION:**
 - RX PIN 0, TX PIN 1.
