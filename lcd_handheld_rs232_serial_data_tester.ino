@@ -31,7 +31,9 @@ HISTORY:
 - v15 Added menu: 'Non chars = On/Off' (Non chars is bytes below Dec32).
   Added menu: 'RX bytes: 0'.
 - v16 Key press retrig avoided.
-- v17 Added menu: Echo On/Off (returns data to sender).    
+- v17 Added menu: Echo On/Off (returns data to sender).  
+- v18 New analog values for buttons. 
+      Put backlight() function in setup, and in loop as before. more info here http://arduino.cc/forum/index.php?topic=96747.0
 
 
 */
@@ -51,7 +53,8 @@ unsigned long lastLight = 0; //lcd led
 //KEYS
 long baud[] = {300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 256000};
 byte baudIndex = 4; // default index 4(9600)
-int adc_key_val[5] = {50, 200, 400, 600, 800 }; //ANALOG VALUES FROM BUTTON SHIELD
+//int adc_key_val[5] = {50, 200, 400, 600, 800 }; //ANALOG VALUES FROM BUTTON SHIELD
+int adc_key_val[5] = {50, 250, 450, 650, 850 }; // OTHER ANALOG VALUES, thanks to Tim.
 byte NUM_KEYS = 5;
 int adc_key_in;
 byte key = -1;
@@ -220,7 +223,7 @@ void updateMenuSelection() {
 
 
 void setup() {
-  pinMode(lcdBacklightPin,OUTPUT);
+  backlight(); // controls backlight. see link in function.
   Serial.begin(baud[baudIndex]);
   Serial.println(F("RS232 Serial data tester by Per Emil Skjold."));
   Serial.println(F("Use arrow up, down, right to scroll menu."));
