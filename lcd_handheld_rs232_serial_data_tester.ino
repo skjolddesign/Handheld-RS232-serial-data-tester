@@ -248,7 +248,7 @@ void setup() {
   lcd.print("down, right.");
   delay(2000);
   lcd.clear();
-  lcd.print("v17 Ready");
+  lcd.print("v18 Ready");
 
   updateMenuSelection();
 }
