@@ -39,4 +39,6 @@
 - v15 Added menu: 'Display non chars'. (Non chars is bytes below Dec32).
   Added menu: 'RX bytes: 0'.
 - v16 Key press retrig avoided.
-- v17 Added menu: Echo On/Off (returns data to sender).   
+- v17 Added menu: Echo On/Off (returns data to sender).  
+- v18 New analog values for buttons. 
+      Put backlight() function in setup, and in loop as before. more info here http://arduino.cc/forum/index.php?topic=96747.0
